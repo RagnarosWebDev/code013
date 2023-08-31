@@ -8,4 +8,5 @@ export interface CreateProductDto {
   readonly sizes: string[] | string;
   readonly recommended: boolean;
   readonly subCategories: number[] | number;
+  readonly modelCharacteristics: string;
 }

@@ -7,15 +7,76 @@ import { EditProductDto } from './dto/edit-product.dto';
 import { Op, WhereOptions } from 'sequelize';
 import { ChangeStateDto } from './dto/change-state.dto';
 import { FilterProductDto } from './dto/filter-product.dto';
+import { GetByIdsDto } from './dto/get-by-ids.dto';
+import { SetProductsCountDto } from './dto/set-products-count.dto';
+import { CountProduct } from '../models/count-product.model';
 
 @Injectable()
 export class ProductService {
   constructor(
     @InjectModel(Product) private productRepository: typeof Product,
     @InjectModel(SubCategory) private categoryRepository: typeof SubCategory,
+    @InjectModel(CountProduct)
+    private countProductRepository: typeof CountProduct,
   ) {}
 
-  async create(dto: CreateProductDto, files: string[]) {
+  async getByIds(dto: GetByIdsDto) {
+    return this.productRepository.findAll({
+      where: {
+        id: {
+          [Op.in]: dto.ids,
+        },
+        deleted: false,
+      },
+      include: [CountProduct],
+    });
+  }
+
+  async updateProductsCount(dto: SetProductsCountDto) {
+    const product = await this.getById(dto.productId);
+    if (
+      product.productCounts.length == 0 &&
+      dto.productsCount.length != product.sizes.length * product.colors.length
+    ) {
+      throw new BadRequestException({
+        message: 'Для первого запроса надо ввести все варианты',
+      });
+    }
+
+    for (const item of dto.productsCount) {
+      const result = product.productCounts.find(
+        (e) => e.color == item.color && e.size == item.size,
+      );
+      if (!result) {
+        await this.countProductRepository.create({
+          productId: dto.productId,
+          color: item.color,
+          size: item.size,
+          count: item.count,
+        });
+      } else {
+        await this.countProductRepository.increment(
+          {
+            count: item.count,
+          },
+          {
+            where: {
+              id: result.id,
+            },
+          },
+        );
+      }
+    }
+
+    return this.productRepository.findOne({
+      where: {
+        id: dto.productId,
+      },
+      include: [SubCategory, CountProduct],
+    });
+  }
+
+  async create(dto: CreateProductDto, files: Express.Multer.File[]) {
     const product = await this.productRepository.create({
       title: dto.title,
       description: dto.description,
@@ -25,9 +86,24 @@ export class ProductService {
       colors: Array.isArray(dto.colors) ? dto.colors : [dto.colors],
       sizes: Array.isArray(dto.sizes) ? dto.sizes : [dto.sizes],
       recommended: dto.recommended,
-      images: files,
+      modelCharacteristics: dto.modelCharacteristics,
       deleted: false,
     });
+
+    for (const color of dto.colors) {
+      for (const size of dto.sizes) {
+        await this.countProductRepository.create({
+          size: size,
+          color: color,
+          count: 0,
+          productId: product.id,
+          images: files
+            .filter((e) => e.fieldname == `image-${color}`)
+            .map((e) => e.filename),
+          cartImage: files.find((e) => e.fieldname == `cart-${color}`).filename,
+        });
+      }
+    }
     await product.$set('subCategories', dto.subCategories);
     return this.productRepository.findOne({
       include: [
@@ -36,6 +112,9 @@ export class ProductService {
           through: {
             attributes: [],
           },
+        },
+        {
+          model: CountProduct,
         },
       ],
       where: {
@@ -63,7 +142,6 @@ export class ProductService {
             : [dto.sizes]
           : undefined,
         recommended: dto.recommended,
-        images: files,
       },
       {
         where: {
@@ -79,7 +157,7 @@ export class ProductService {
       where: {
         id: id,
       },
-      include: [SubCategory],
+      include: [SubCategory, CountProduct],
     });
     if (!candidate)
       throw new BadRequestException({ message: 'Такого обьекта нет' });
@@ -91,6 +169,7 @@ export class ProductService {
       deleted: false,
     };
 
+    if (dto.recommended) filter.recommended = dto.recommended;
     if (dto.query) {
       const match = `%${dto.query}%`;
       filter[Op.or] = [
@@ -124,6 +203,9 @@ export class ProductService {
                 id: dto.category,
               }
             : {},
+        },
+        {
+          model: CountProduct,
         },
       ],
     });

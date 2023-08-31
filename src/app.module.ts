@@ -9,6 +9,10 @@ import { Category } from './models/category.model';
 import { SubCategory } from './models/sub-category.model';
 import { join } from 'path';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { OrderModule } from './order/order.module';
+import { Order } from './models/order.model';
+import { OrderProduct } from './models/order-product.model';
+import { CountProduct } from './models/count-product.model';
 
 @Module({
   imports: [
@@ -28,10 +32,19 @@ import { ServeStaticModule } from '@nestjs/serve-static';
       username: process.env.POSTGRES_USER,
       password: process.env.POSTGRES_PASSWORD,
       database: process.env.POSTGRES_DB,
-      models: [Product, Category, SubCategory, ProductSubCategory],
+      models: [
+        Product,
+        Category,
+        SubCategory,
+        ProductSubCategory,
+        Order,
+        OrderProduct,
+        CountProduct,
+      ],
       //sync: { force: true, alter: false },
       autoLoadModels: true,
     }),
+    OrderModule,
   ],
   controllers: [],
   providers: [],

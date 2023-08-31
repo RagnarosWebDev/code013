@@ -5,10 +5,16 @@ import { ProductService } from './product.service';
 import { ProductController } from './product.controller';
 import { SubCategory } from '../models/sub-category.model';
 import { ProductSubCategory } from '../models/product-sub-category.model';
+import { CountProduct } from '../models/count-product.model';
 
 @Module({
   imports: [
-    SequelizeModule.forFeature([Product, SubCategory, ProductSubCategory]),
+    SequelizeModule.forFeature([
+      Product,
+      SubCategory,
+      ProductSubCategory,
+      CountProduct,
+    ]),
   ],
   providers: [ProductService],
   controllers: [ProductController],

@@ -8,6 +8,8 @@ import {
 } from 'sequelize-typescript';
 import { SubCategory } from './sub-category.model';
 import { ProductSubCategory } from './product-sub-category.model';
+import { OrderProduct } from './order-product.model';
+import { CountProduct } from './count-product.model';
 
 @Table({ tableName: 'product', createdAt: false, updatedAt: false })
 export class Product extends Model<Product> {
@@ -54,16 +56,22 @@ export class Product extends Model<Product> {
   sizes: string[];
 
   @Column({
-    type: DataType.ARRAY(DataType.STRING),
+    type: DataType.BOOLEAN,
     allowNull: false,
   })
-  images: string[];
+  recommended: boolean;
 
   @Column({
     type: DataType.BOOLEAN,
     allowNull: false,
   })
-  recommended: boolean;
+  deleted: boolean;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
+  modelCharacteristics: string;
 
   @BelongsToMany(() => SubCategory, () => ProductSubCategory)
   subCategories: SubCategory[];
@@ -71,9 +79,9 @@ export class Product extends Model<Product> {
   @HasMany(() => ProductSubCategory, 'categoryId')
   many: ProductSubCategory[];
 
-  @Column({
-    type: DataType.BOOLEAN,
-    allowNull: false,
-  })
-  deleted: boolean;
+  @HasMany(() => OrderProduct, 'productId')
+  orderProducts: OrderProduct[];
+
+  @HasMany(() => CountProduct, 'productId')
+  productCounts: CountProduct[];
 }
