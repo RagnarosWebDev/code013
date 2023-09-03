@@ -3,4 +3,5 @@ export class FilterProductDto {
   row: number;
   category?: number;
   recommended?: boolean;
+  categoryId?: number;
 }

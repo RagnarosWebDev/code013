@@ -9,6 +9,7 @@ import { FilterProductDto } from './dto/filter-product.dto';
 import { GetByIdsDto } from './dto/get-by-ids.dto';
 import { SetProductsCountDto } from './dto/set-products-count.dto';
 import { CountProduct } from '../models/count-product.model';
+import { Category } from '../models/category.model';
 
 @Injectable()
 export class ProductService {
@@ -169,6 +170,15 @@ export class ProductService {
       ];
     }
 
+    const op: WhereOptions<SubCategory> = {};
+
+    if (dto.category) {
+      op.id = dto.category;
+    }
+    if (dto.categoryId) {
+      op.categoryId = dto.categoryId;
+    }
+
     return this.productRepository.findAll({
       where: filter,
       offset: ProductService.pageSize * dto.row,
@@ -176,11 +186,7 @@ export class ProductService {
       include: [
         {
           model: SubCategory,
-          where: dto.category
-            ? {
-                id: dto.category,
-              }
-            : {},
+          where: op,
         },
         {
           model: CountProduct,
@@ -217,16 +223,21 @@ export class ProductService {
       ];
     }
 
+    const op: WhereOptions<SubCategory> = {};
+
+    if (dto.category) {
+      op.id = dto.category;
+    }
+    if (dto.categoryId) {
+      op.categoryId = dto.categoryId;
+    }
+
     const count = await this.productRepository.count({
       where: filter,
       include: [
         {
           model: SubCategory,
-          where: dto.category
-            ? {
-                id: dto.category,
-              }
-            : {},
+          where: op,
         },
       ],
     });

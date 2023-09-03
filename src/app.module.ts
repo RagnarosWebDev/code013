@@ -41,7 +41,7 @@ import { CountProduct } from './models/count-product.model';
         OrderProduct,
         CountProduct,
       ],
-      //sync: { force: true, alter: false },
+      sync: { force: true, alter: false },
       autoLoadModels: true,
     }),
     OrderModule,
