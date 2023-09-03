@@ -31,6 +31,7 @@ export class CategoryService {
   async list() {
     return this.categoryRepository.findAll({
       include: [SubCategory],
+      order: ['id'],
     });
   }
 }

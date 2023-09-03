@@ -4,7 +4,6 @@ import {
   Get,
   Param,
   Post,
-  UploadedFile,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
@@ -12,12 +11,9 @@ import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import {
   AnyFilesInterceptor,
-  FileFieldsInterceptor,
-  FileInterceptor,
   FilesInterceptor,
 } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { EditProductDto } from './dto/edit-product.dto';
 import { ChangeStateDto } from './dto/change-state.dto';
 import { FilterProductDto } from './dto/filter-product.dto';
 import { GetByIdsDto } from './dto/get-by-ids.dto';
@@ -65,19 +61,6 @@ export class ProductController {
   @Post('/setVariants')
   async setVariants(@Body() dto: SetProductsCountDto) {
     return this.productService.updateProductsCount(dto);
-  }
-
-  @Post('edit')
-  @UseInterceptors(AnyFilesInterceptor())
-  async edit(
-    @Body() dto: EditProductDto,
-    @UploadedFiles()
-    images?: Express.Multer.File[],
-  ) {
-    return this.productService.edit(
-      dto,
-      images?.length ? images.map((u) => u.filename) : undefined,
-    );
   }
 
   @Post('/')

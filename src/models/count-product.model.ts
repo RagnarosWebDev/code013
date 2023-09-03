@@ -46,4 +46,10 @@ export class CountProduct extends Model<CountProduct> {
     allowNull: false,
   })
   cartImage: string;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
+  vendorCode: string;
 }

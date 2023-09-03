@@ -33,6 +33,12 @@ export class Order extends Model<Order> {
     type: DataType.STRING,
     allowNull: false,
   })
+  email: string;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
   paymentId: string;
 
   @Column({

@@ -91,6 +91,7 @@ export class OrderService {
     const order = await this.orderRepository.create({
       address: dto.address,
       fio: dto.fio,
+      email: dto.email,
       phone: dto.phone,
       price: 0,
       link: '',

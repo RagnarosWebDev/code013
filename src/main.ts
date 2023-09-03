@@ -2,10 +2,13 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { urlencoded } from 'express';
+import { ValidationPipe } from '@nestjs/common';
 
 async function startApp() {
   const PORT = process.env.APP_PORT || 5555;
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  app.useGlobalPipes(new ValidationPipe());
 
   app.enableCors({ credentials: true, origin: true });
   app.use(

@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Product } from '../models/product.model';
 import { SubCategory } from '../models/sub-category.model';
 import { CreateProductDto } from './dto/create-product.dto';
-import { EditProductDto } from './dto/edit-product.dto';
 import { Op, WhereOptions } from 'sequelize';
 import { ChangeStateDto } from './dto/change-state.dto';
 import { FilterProductDto } from './dto/filter-product.dto';
@@ -81,7 +80,6 @@ export class ProductService {
       title: dto.title,
       description: dto.description,
       composition: dto.composition,
-      vendorCode: dto.vendorCode,
       price: dto.price,
       colors: Array.isArray(dto.colors) ? dto.colors : [dto.colors],
       sizes: Array.isArray(dto.sizes) ? dto.sizes : [dto.sizes],
@@ -89,10 +87,18 @@ export class ProductService {
       modelCharacteristics: dto.modelCharacteristics,
       deleted: false,
     });
+    console.log(files);
 
-    for (const color of dto.colors) {
-      for (const size of dto.sizes) {
+    for (const color of typeof dto.colors == 'string'
+      ? [dto.colors]
+      : dto.colors) {
+      for (const size of typeof dto.sizes == 'string'
+        ? [dto.sizes]
+        : dto.sizes) {
+        console.log(color);
+        console.log(files.find((e) => e.fieldname == `cart-${color}`));
         await this.countProductRepository.create({
+          vendorCode: dto[`code-${color}`],
           size: size,
           color: color,
           count: 0,
@@ -105,6 +111,7 @@ export class ProductService {
       }
     }
     await product.$set('subCategories', dto.subCategories);
+
     return this.productRepository.findOne({
       include: [
         {
@@ -121,35 +128,6 @@ export class ProductService {
         id: product.id,
       },
     });
-  }
-
-  async edit(dto: EditProductDto, files: string[] | undefined) {
-    const [result] = await this.productRepository.update(
-      {
-        title: dto.title,
-        description: dto.description,
-        composition: dto.composition,
-        vendorCode: dto.vendorCode,
-        price: dto.price,
-        colors: dto.colors
-          ? Array.isArray(dto.colors)
-            ? dto.colors
-            : [dto.colors]
-          : undefined,
-        sizes: dto.sizes
-          ? Array.isArray(dto.sizes)
-            ? dto.sizes
-            : [dto.sizes]
-          : undefined,
-        recommended: dto.recommended,
-      },
-      {
-        where: {
-          id: dto.id,
-        },
-      },
-    );
-    return { success: result != 0 };
   }
 
   async getById(id: number) {
@@ -211,7 +189,7 @@ export class ProductService {
     });
   }
 
-  static pageSize = 20;
+  static pageSize = 18;
 
   async searchCount(dto: FilterProductDto) {
     const filter: WhereOptions<Product> = {

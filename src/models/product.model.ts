@@ -32,12 +32,6 @@ export class Product extends Model<Product> {
   composition: string;
 
   @Column({
-    type: DataType.INTEGER,
-    allowNull: false,
-  })
-  vendorCode: number;
-
-  @Column({
     type: DataType.DOUBLE,
     allowNull: false,
   })
