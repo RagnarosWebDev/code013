@@ -13,6 +13,8 @@ import { OrderModule } from './order/order.module';
 import { Order } from './models/order.model';
 import { OrderProduct } from './models/order-product.model';
 import { CountProduct } from './models/count-product.model';
+import { UsersModule } from './users/users.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -41,10 +43,12 @@ import { CountProduct } from './models/count-product.model';
         OrderProduct,
         CountProduct,
       ],
-      sync: { force: true, alter: false },
+      //sync: { force: true, alter: false },
       autoLoadModels: true,
     }),
     OrderModule,
+    UsersModule,
+    JwtModule,
   ],
   controllers: [],
   providers: [],

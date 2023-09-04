@@ -4,7 +4,7 @@ import { OrderProduct } from './order-product.model';
 export enum OrderStatus {
   payed = 'payed',
   waiting = 'waiting',
-  success = 'success',
+  error = 'error',
 }
 
 @Table({ tableName: 'order', createdAt: true, updatedAt: false })

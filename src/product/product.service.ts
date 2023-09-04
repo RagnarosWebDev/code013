@@ -9,7 +9,6 @@ import { FilterProductDto } from './dto/filter-product.dto';
 import { GetByIdsDto } from './dto/get-by-ids.dto';
 import { SetProductsCountDto } from './dto/set-products-count.dto';
 import { CountProduct } from '../models/count-product.model';
-import { Category } from '../models/category.model';
 
 @Injectable()
 export class ProductService {

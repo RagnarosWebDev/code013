@@ -1,12 +1,17 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { InjectModel } from '@nestjs/sequelize';
 import { Order, OrderStatus } from '../models/order.model';
 import { Product } from '../models/product.model';
 import { Op } from 'sequelize';
 import { OrderProduct } from '../models/order-product.model';
-import * as md5 from 'md5';
 import { CountProduct } from '../models/count-product.model';
+import axios from 'axios';
+import { v4 as uuid } from 'uuid';
 
 @Injectable()
 export class OrderService {
@@ -23,18 +28,52 @@ export class OrderService {
       where: {
         paymentId: payId,
       },
+      include: [OrderProduct],
     });
+    console.log(candidate);
     if (!candidate)
       throw new BadRequestException('Такого платежа не существует');
-    candidate.set('orderStatus', status);
-    candidate.orderStatus = status;
-    return candidate;
-  }
+    if (candidate.orderStatus != OrderStatus.waiting)
+      throw new BadRequestException('Состояние товара уже выставлено');
 
-  randomString(n): string {
-    let result = '';
-    while (result.length < n) result += Math.random().toString(36).substring(2);
-    return result.substring(0, n).toUpperCase();
+    if (status == OrderStatus.error) {
+      for (const item of candidate.orderProducts) {
+        await this.countProductRepository.increment(
+          {
+            count: item.count,
+          },
+          {
+            where: {
+              productId: item.productId,
+              size: item.size,
+              color: item.color,
+            },
+          },
+        );
+      }
+    }
+
+    await this.orderRepository.update(
+      {
+        orderStatus: status,
+      },
+      {
+        where: {
+          paymentId: payId,
+        },
+      },
+    );
+    return this.orderRepository.findOne({
+      where: {
+        paymentId: payId,
+      },
+      include: [
+        {
+          model: OrderProduct,
+          include: [Product],
+        },
+      ],
+    });
   }
   async createPay(dto: CreateOrderDto) {
     const retry = [...new Set(dto.products.map((u) => u.productId))];
@@ -77,17 +116,6 @@ export class OrderService {
       });
     }
 
-    let generate;
-    do {
-      generate = this.randomString(6);
-    } while (
-      await this.orderRepository.findOne({
-        where: {
-          paymentId: generate,
-        },
-      })
-    );
-
     const order = await this.orderRepository.create({
       address: dto.address,
       fio: dto.fio,
@@ -95,7 +123,7 @@ export class OrderService {
       phone: dto.phone,
       price: 0,
       link: '',
-      paymentId: generate,
+      paymentId: '',
       orderStatus: OrderStatus.waiting,
     });
 
@@ -105,6 +133,14 @@ export class OrderService {
       price +=
         pays.filter((u) => u.id == productItem.productId)[0].price *
         productItem.count;
+    }
+
+    const {
+      id,
+      confirmation: { confirmation_url },
+    } = await this.createPayFromService(price);
+
+    for (const productItem of dto.products) {
       await this.countProductRepository.decrement(
         {
           count: productItem.count,
@@ -126,14 +162,11 @@ export class OrderService {
       });
     }
 
-    const hashed = md5(`38531:${price}:V)xf4h1DfE3853I:RUB:${generate}`);
-
-    const payUrl = `https://pay.freekassa.ru/?oa=${price}&currency=RUB&o=${generate}&s=${hashed}&m=38531`;
-
     await this.orderRepository.update(
       {
+        paymentId: id,
         price: price,
-        link: payUrl,
+        link: confirmation_url,
       },
       {
         where: {
@@ -148,8 +181,50 @@ export class OrderService {
       },
     });
   }
-}
 
-//1072d67c19674807fe52fd2ac2964724
-//V)xf4h1DfE3853I
-//X{pP9%iY})b2JX@
+  async createPayFromService(price: number) {
+    try {
+      const result = await axios(`https://api.yookassa.ru/v3/payments`, {
+        method: 'POST',
+        headers: {
+          'Idempotence-Key': uuid(),
+        },
+        auth: {
+          username: '250550',
+          password: 'test_TP4mu57LGyl4yoMfEhRHF6legMphdh7BnqLbTH6skdI',
+        },
+        data: {
+          amount: {
+            value: price,
+            currency: 'RUB',
+          },
+          capture: true,
+          confirmation: {
+            type: 'redirect',
+            return_url: 'https://code013.ru',
+          },
+        },
+      });
+
+      return result.data;
+    } catch (e) {
+      throw new InternalServerErrorException({
+        message: ['Не удалось создать заказ, попробуйте чуть позже'],
+      });
+    }
+  }
+
+  async list(row: number) {
+    return this.orderRepository.findAll({
+      order: [['id', 'desc']],
+      offset: row * 20,
+      limit: 20,
+      include: [
+        {
+          model: OrderProduct,
+          include: [Product],
+        },
+      ],
+    });
+  }
+}

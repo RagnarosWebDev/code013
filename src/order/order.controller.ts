@@ -1,15 +1,18 @@
 import {
   Body,
   Controller,
-  HttpException,
-  HttpStatus,
+  Get,
   Post,
+  Query,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
-import { FreeKassaDto } from './dto/pay-result.dto';
-import * as md5 from 'md5';
+import { PayResultDto } from './dto/pay-result.dto';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { Request } from 'express';
 import { OrderStatus } from '../models/order.model';
+import { AdminGuard } from '../admin.guard';
 
 @Controller('order')
 export class OrderController {
@@ -20,27 +23,55 @@ export class OrderController {
     return this.orderService.createPay(data);
   }
 
-  @Post('/info_kassa')
-  async freeKassaPay(@Body() dto: FreeKassaDto) {
-    if (!dto.SIGN) {
-      throw new HttpException('Токен должен быть', HttpStatus.BAD_REQUEST);
-    }
-    try {
-      const res =
-        dto.SIGN ==
-        md5(`30887:${dto.AMOUNT}:%B6g?rcQ0d=k0r2:${dto.MERCHANT_ORDER_ID}`);
-      if (res) {
-        return await this.orderService.setStatus(
-          dto.MERCHANT_ORDER_ID,
-          OrderStatus.payed,
-        );
-      }
-    } catch (e) {
-      throw new HttpException('', HttpStatus.BAD_REQUEST);
-    }
+  static correctIps = [
+    '185.71.76.0/27',
+    '185.71.77.0/27',
+    '77.75.153.0/25',
+    '77.75.156.11',
+    '77.75.156.35',
+    '77.75.154.128/25',
+    '2a02:5180::/32',
+    '185.71.76.0',
+    '185.71.77.0',
+    '77.75.153.0',
+    '77.75.156.11',
+    '77.75.156.35',
+    '77.75.154.128',
+    '2a02:5180',
+  ];
+
+  @Post('/info')
+  async info(@Body() dto: PayResultDto, @Req() request: Request) {
+    /*const ip = request.headers['x-real-ip'] as string;
+
+    if (!OrderController.correctIps.includes(ip)) {
+      console.log('wrong ip');
+      throw new BadRequestException({
+        message: 'нельзя',
+      });
+    }*/
+
+    console.log(
+      dto.event == 'succeeded'
+        ? OrderStatus.payed
+        : dto.event == 'canceled'
+        ? OrderStatus.error
+        : OrderStatus.waiting,
+    );
+
+    return await this.orderService.setStatus(
+      dto.object.id,
+      dto.event == 'succeeded'
+        ? OrderStatus.payed
+        : dto.event == 'canceled'
+        ? OrderStatus.error
+        : OrderStatus.waiting,
+    );
+  }
+
+  @UseGuards(AdminGuard)
+  @Get('/list')
+  async list(@Query('row') row: number) {
+    return this.orderService.list(row);
   }
 }
-
-//1072d67c19674807fe52fd2ac2964724
-//V)xf4h1DfE3853I
-//X{pP9%iY})b2JX@

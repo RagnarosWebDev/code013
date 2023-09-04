@@ -6,6 +6,7 @@ import { ProductController } from './product.controller';
 import { SubCategory } from '../models/sub-category.model';
 import { ProductSubCategory } from '../models/product-sub-category.model';
 import { CountProduct } from '../models/count-product.model';
+import { GlobalJwtModule } from '../global-jwt.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { CountProduct } from '../models/count-product.model';
       ProductSubCategory,
       CountProduct,
     ]),
+    GlobalJwtModule,
   ],
   providers: [ProductService],
   controllers: [ProductController],

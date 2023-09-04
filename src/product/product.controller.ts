@@ -5,30 +5,21 @@ import {
   Param,
   Post,
   UploadedFiles,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
-import {
-  AnyFilesInterceptor,
-  FilesInterceptor,
-} from '@nestjs/platform-express';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { ChangeStateDto } from './dto/change-state.dto';
 import { FilterProductDto } from './dto/filter-product.dto';
 import { GetByIdsDto } from './dto/get-by-ids.dto';
 import { SetProductsCountDto } from './dto/set-products-count.dto';
+import { AdminGuard } from '../admin.guard';
 
 @Controller('product')
 export class ProductController {
-  static files = FilesInterceptor('images', 15, {
-    storage: diskStorage({
-      destination: './images',
-      filename: (req, file, cb) => {
-        cb(null, `${Date.now()}.${file.originalname.split('.').at(-1)}`);
-      },
-    }),
-  });
   constructor(private productService: ProductService) {}
 
   @Post('/create')
@@ -50,6 +41,7 @@ export class ProductController {
       },
     }),
   )
+  @UseGuards(AdminGuard)
   async create(
     @Body() dto: CreateProductDto,
     @UploadedFiles()
@@ -58,6 +50,7 @@ export class ProductController {
     return this.productService.create(dto, files);
   }
 
+  @UseGuards(AdminGuard)
   @Post('/setVariants')
   async setVariants(@Body() dto: SetProductsCountDto) {
     return this.productService.updateProductsCount(dto);
@@ -83,6 +76,7 @@ export class ProductController {
     return this.productService.searchCount(dto);
   }
 
+  @UseGuards(AdminGuard)
   @Post('/changeState')
   async changeState(@Body() dto: ChangeStateDto) {
     return this.productService.changeState(dto);
