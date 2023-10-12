@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { urlencoded } from 'express';
+import { NextFunction, urlencoded } from 'express';
 import { ValidationPipe } from '@nestjs/common';
 
 async function startApp() {
@@ -9,6 +9,11 @@ async function startApp() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.useGlobalPipes(new ValidationPipe());
+
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    console.log(req.url);
+    next();
+  });
 
   app.enableCors({ credentials: true, origin: true });
   app.use(

@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Category } from '../models/category.model';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { SubCategory } from '../models/sub-category.model';
+import sequelize from 'sequelize';
 
 @Injectable()
 export class CategoryService {
@@ -30,8 +31,15 @@ export class CategoryService {
 
   async list() {
     return this.categoryRepository.findAll({
-      include: [SubCategory],
-      order: ['id'],
+      include: [
+        {
+          model: SubCategory,
+        },
+      ],
+      order: [
+        ['id', 'asc'],
+        [sequelize.col('categoryTypes.id'), 'desc'],
+      ],
     });
   }
 }

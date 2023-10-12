@@ -30,7 +30,7 @@ export class OrderService {
       },
       include: [OrderProduct],
     });
-    console.log(candidate);
+
     if (!candidate)
       throw new BadRequestException('Такого платежа не существует');
     if (candidate.orderStatus != OrderStatus.waiting)
@@ -190,8 +190,8 @@ export class OrderService {
           'Idempotence-Key': uuid(),
         },
         auth: {
-          username: '250550',
-          password: 'test_TP4mu57LGyl4yoMfEhRHF6legMphdh7BnqLbTH6skdI',
+          username: '243997',
+          password: 'live_6KphHqKeAvorPRp9cqjXPLHJupFTWWaqIAgEuNio8Ow',
         },
         data: {
           amount: {

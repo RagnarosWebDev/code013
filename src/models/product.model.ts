@@ -67,6 +67,12 @@ export class Product extends Model<Product> {
   })
   modelCharacteristics: string;
 
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+  })
+  ordered: number;
+
   @BelongsToMany(() => SubCategory, () => ProductSubCategory)
   subCategories: SubCategory[];
 

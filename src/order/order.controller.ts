@@ -42,28 +42,23 @@ export class OrderController {
 
   @Post('/info')
   async info(@Body() dto: PayResultDto, @Req() request: Request) {
-    /*const ip = request.headers['x-real-ip'] as string;
+    const ip = request.headers['x-real-ip'] as string;
 
-    if (!OrderController.correctIps.includes(ip)) {
+    console.log(ip);
+    console.log(dto);
+
+    /*if (!OrderController.correctIps.includes(ip)) {
       console.log('wrong ip');
       throw new BadRequestException({
         message: 'нельзя',
       });
     }*/
 
-    console.log(
-      dto.event == 'succeeded'
-        ? OrderStatus.payed
-        : dto.event == 'canceled'
-        ? OrderStatus.error
-        : OrderStatus.waiting,
-    );
-
     return await this.orderService.setStatus(
       dto.object.id,
-      dto.event == 'succeeded'
+      dto.event == 'payment.succeeded'
         ? OrderStatus.payed
-        : dto.event == 'canceled'
+        : dto.event == 'payment.canceled'
         ? OrderStatus.error
         : OrderStatus.waiting,
     );

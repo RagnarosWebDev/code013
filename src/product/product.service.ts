@@ -31,6 +31,38 @@ export class ProductService {
     });
   }
 
+  async updateImages(dto: {
+    id: number;
+    items: { images: string[]; color: string; cartImage: string }[];
+  }) {
+    for (const item of dto.items) {
+      console.log(dto.id + ' ' + item.color);
+      await this.countProductRepository.update(
+        {
+          images: item.images,
+          cartImage: item.cartImage,
+        },
+        {
+          where: {
+            productId: dto.id,
+            color: item.color,
+          },
+          logging: true,
+        },
+      );
+      console.log(
+        await this.countProductRepository.findAll({
+          where: {
+            productId: dto.id,
+            color: item.color,
+          },
+        }),
+      );
+    }
+
+    return { success: true };
+  }
+
   async updateProductsCount(dto: SetProductsCountDto) {
     const product = await this.getById(dto.productId);
     if (
@@ -180,6 +212,7 @@ export class ProductService {
 
     return this.productRepository.findAll({
       where: filter,
+      order: ['ordered'],
       offset: ProductService.pageSize * dto.row,
       limit: ProductService.pageSize,
       include: [
